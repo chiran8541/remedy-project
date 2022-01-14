@@ -1,3 +1,3 @@
 FROM alpine
-MAINTAINER Chiran
-CMD["echo","Hello world"]
+MAINTAINER "Chiran"
+CMD ["echo","Hello world"]
