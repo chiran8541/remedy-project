@@ -1,33 +1,42 @@
 pipeline {
     agent any
-
+    environment {
+        AWS_ACCOUNT_ID="188274256193"
+        AWS_DEFAULT_REGION="us-east-1" 
+        IMAGE_REPO_NAME="myrepo"
+        IMAGE_TAG="V1"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    }
+   
     stages {
-        stage ('Compile Stage') {
-
+        
+         stage('Logging into AWS ECR') {
             steps {
-                withMaven(maven : 'maven_3_5_0') {
-                    sh 'mvn clean install'
+                script {
+                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
                 }
+                 
             }
         }
-
-    /*    stage ('Testing Stage') {
-
-            steps {
-                withMaven(maven : 'maven_3_5_0') {
-                    sh 'mvn test'
-                }
-            }
+       
+  
+    // Building Docker images
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build "${IMAGE_REPO_NAME}:${IMAGE_TAG}"
         }
-*/
-
-        stage ('Deployment Stage') {
-            steps {
-
-                sh '/usr/local/bin/aws s3 cp target/jenkins-example*.jar s3://techprimers-s3/'
-                sh '/usr/local/bin/aws s3 ls'
-                sh '/usr/local/bin/aws s3 ls s3://techprimers-s3/'
-            }
+      }
+    }
+   
+    // Uploading Docker images into AWS ECR
+    stage('Pushing to ECR') {
+     steps{  
+         script {
+                sh "docker tag ${IMAGE_REPO_NAME}:${IMAGE_TAG} ${REPOSITORY_URI}:$IMAGE_TAG"
+                sh "docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
+         }
         }
+      }
     }
 }
