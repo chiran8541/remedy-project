@@ -11,7 +11,7 @@ pipeline {
     }
     
     stages {
-         stage('Creating Stack in FPLNonProd') {
+         stage('Creating Stack in FPLNonProd.') {
                
                steps {
                 script {
