@@ -1,5 +1,5 @@
 package com.techprimers.testing;
-
+// java
 public class FizzBuzz {
 
     public String play(int number) {
