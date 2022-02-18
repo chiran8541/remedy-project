@@ -1,5 +1,5 @@
 pipeline {
-   agent { label 'ec2-fleet-me005' }
+   agent any
    options {
           buildDiscarder(logRotator(numToKeepStr: '3', artifactNumToKeepStr: '2', daysToKeepStr: '3', artifactDaysToKeepStr: '3'))
    }
