@@ -1,0 +1,40 @@
+pipeline {
+   agent { label 'ec2-fleet-me005' }
+   options {
+          buildDiscarder(logRotator(numToKeepStr: '3', artifactNumToKeepStr: '2', daysToKeepStr: '3', artifactDaysToKeepStr: '3'))
+   }
+    parameters {
+		string(description: 'CFN Stack Name', name: 'StackName')
+		string(description: 'CFN template name in Github(with file format ex: xxxx.yml)', name: 'TemplateFile')
+		string(description: 'Parameterfile name in Github(with file format ex: xxxx.json)', name: 'ParameterFile')
+		choice(name: 'Action', choices: ['create', 'update'], description: 'Action to be performed on CFN stack')
+    }
+    
+    stages {
+         stage('Creating Stack in FPLNonProd') {
+               
+               steps {
+                script {
+                if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                            sh """
+							   mkdir -p /tmp/Falcon-me005-cfn
+                               cp ${workspace}/Cloudformation/$TemplateFile /tmp/Falcon-me005-cfn
+                               cp ${workspace}/Cloudformation/$ParameterFile /tmp/Falcon-me005-cfn
+							  
+								
+								cd /tmp/Falcon-me005-cfn
+								aws configure set default.region us-east-1
+                               
+								aws cloudformation ${params.Action}-stack --stack-name $StackName --template-body file:////tmp/Falcon-me005-cfn/$TemplateFile --parameters file:////tmp/Falcon-me005-cfn/$ParameterFile --capabilities CAPABILITY_NAMED_IAM --tags Key=AppCode,Value=ME005 Key=AppName,Value=MeterOps Key=TeamName,Value=Falcon 
+								rm -f $TemplateFile
+							    rm -f $ParameterFile
+                                rm -fr /tmp/Falcon-me005-cfn
+                               """
+                               
+                            }
+                        }
+
+                    }
+                }
+    }
+}
